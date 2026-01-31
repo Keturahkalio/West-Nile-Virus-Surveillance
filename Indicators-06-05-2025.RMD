@@ -1,0 +1,1384 @@
+---
+pagetitle: "West Nile virus"
+output:
+  html_document:
+    theme: yeti
+    pagetitle: 'West Nile Virus Surveillance' 
+    css: ['css/style.css', 'css/style_new.css', 'css/base.css', 'css/adjust_base_on_width.css']
+    includes:
+      in_header: 'www/hero-image_test.html'
+      after_body: 'www/footer.html'
+    toc: no
+    toc_depth: 4
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
+
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE, echo=FALSE, message=FALSE, warning=FALSE}
+
+knitr::opts_chunk$set(echo      = FALSE)
+knitr::opts_chunk$set(warning   = FALSE)
+knitr::opts_chunk$set(message   = FALSE)
+knitr::opts_chunk$set(fig.align = 'center')
+library(rmarkdown)
+library(magrittr)
+library(scales)
+library(lubridate)
+library(ggplot2)
+library(plotly)
+library(sf)
+library(dplyr)
+library(shiny)
+library(tidyr)
+library(tibble)
+library(shinyalert)
+library(tidyverse)
+library(janitor)
+library(stringr)
+library(gt)
+library(here)
+library(rio)
+library(bcmaps)
+library(tmap)
+library(DT)
+library(writexl)
+library(readxl)
+library(here)
+
+# Quinn's app
+
+library(rlang)
+library(shinyWidgets)
+library(leaflet)
+library(bslib)
+library(shinyjs)
+library(rmapshaper)
+library(prettymapr)
+library(bsicons)
+
+```
+
+
+<!--Change idle time -->
+```{r, context = 'server'}
+
+keep_alive <- shiny::reactiveTimer(
+  intervalMs = 120000,
+  session    = shiny::getDefaultReactiveDomain()
+  )
+
+shiny::observe(
+  {
+    if(req(input$isActive) %>% as.logical) keep_alive()
+    }
+  )
+
+```
+
+
+```{r data, cache = F}
+
+
+
+data_notes_outbreak <- 
+  readLines(
+    'www/data_notes_outbreak.txt'
+  )
+
+definitions_outbreak <- 
+  readLines(
+    'www/definitions_outbreak.txt'
+)
+
+abbreviations_outbreak <- 
+  readLines(
+    'www/abbreviations_outbreak.txt'
+  )
+
+disclaimer_outbreak <- 
+  readLines(
+    'www/disclaimer_outbreak.txt'
+  )
+
+references <- 
+  readLines(
+    'www/references.txt'
+)
+
+acknowledgements_outbreak <-
+  readLines(
+    'www/acknowledgements_outbreak.txt'
+  )
+
+aedes <-
+  readLines(
+    'www/aedes.txt'
+  )
+
+anopheles <-
+  readLines(
+    'www/anopheles.txt'
+  )
+
+coquilletidia <-
+  readLines(
+    'www/coquillettidia.txt'
+  )
+
+culex <-
+  readLines(
+    'www/culex.txt'
+  )
+
+culiseta <-
+  readLines(
+    'www/culiseta.txt'
+  )
+
+####### WEST NILE VIRUS
+
+# Epi Curve Data Load
+
+animal_wnv_cases <- import(here("data", "Animal WNv Cases.xlsx"))
+human_wnv_cases <- import(here("data", "Human WNv Cases.xlsx"))
+
+
+# Define full year range (modify as needed)
+full_years <- seq(
+  min(c(human_wnv_cases$Year, animal_wnv_cases$Year), na.rm = TRUE),
+  max(format(Sys.Date(), "%Y"), max(c(human_wnv_cases$Year, animal_wnv_cases$Year), na.rm = TRUE)),
+  by = 1
+)
+
+# Define custom colors
+custom_colors <- c(
+  "Travel-related" = "#98AF57",  
+  "Locally acquired" = "#2980B9",  
+  "Unknown" = "#808080",  
+  "West Nile Neurological Syndrome" = "#0B4C87",  
+  "West Nile non-Neurological Syndrome" = "#2980B9",  
+  " West Nile Asymptomatic Infection" = "#9DC8e9", 
+  "Unspecified" = "grey",
+  "Corvids" = "#f4ac28",  
+  "Horse" = "#4a3a5a", 
+  "Mosquito Pools" = "#93384A",
+  "Horses (locally acquired)" = "#4C647E",
+  "Horses (travel-related)" = "#8098B4"
+)
+
+
+####### LOCATION OF WNV DETECTIONS IN BRITISH COLUMBIA 
+
+#local detections in Animals
+WNV_Animal <- animal_wnv_cases %>%
+  clean_names()%>%
+  filter(travel != "Yes")%>%
+  select(year, lha, animal_type)
+
+#locally-acquired human cases
+WNV_Human <- human_wnv_cases %>%
+  clean_names()%>%
+  filter(travel %in% c("No", "NO", "no"))%>%
+  mutate(animal_type = "Human") %>%
+  select(year, lha, animal_type)
+
+#merge
+WNV_detections = WNV_Human %>%
+  bind_rows(WNV_Animal)
+
+#basemap of LHAs
+lha <- bcmaps::health_lha(ask = FALSE, force = FALSE)%>%
+        st_transform(crs = 4326) %>%
+        rmapshaper::ms_simplify(keep = 0.05, keep_shapes = TRUE)
+
+
+
+######## MOSQUITO SURVEILLANNCE
+
+# Map and Table Data Upload
+
+# Loading shapefiles 
+
+HSDA_layer <- bcmaps::health_hsda(ask = FALSE, force = FALSE)%>%
+        st_transform(crs = 4326) %>%
+        rmapshaper::ms_simplify(keep = 0.05, keep_shapes = TRUE)
+
+
+HA_layer <- bcmaps::health_ha(ask = FALSE, force = FALSE)%>%
+        st_transform(crs = 4326) %>%
+        rmapshaper::ms_simplify(keep = 0.05, keep_shapes = TRUE)
+
+
+# loading dataset
+
+file_path <- here("data", "Summary of Mosquito Surveillance 2003-2014.xlsx")
+
+# Get all sheet names (M2003 - M2014)
+sheet_names <- excel_sheets(file_path)
+
+# Function to read a sheet and add the "Year" column
+read_and_label <- function(sheet) {
+  year <- as.numeric(gsub("M", "", sheet))  # Extract numeric year from sheet name
+  import(file_path, which = sheet) %>%
+    mutate(Year = year)  # Add Year column
+}
+
+# Read all sheets and combine into one df
+mosquito_count_reports <- bind_rows(lapply(sheet_names, read_and_label)) %>%
+  rename(HSDA = `HSDA Code`,
+         Coquillettidia = `Coquilletidia perturbans`) %>%
+  filter(`HSDA ID` != 99) %>%
+  select(- c(`HSDA ID`, `Culex unknown species`))
+
+
+mosquito_count_reports1 <- mosquito_count_reports %>%
+  mutate(HSDA = dplyr::case_when(
+    HSDA == "CVI" ~ "Central Vancouver Island",
+    HSDA == "EK" ~ "East Kootenay",
+    HSDA == "FE" ~ "Fraser East",
+    HSDA == "FN" ~ "Fraser North",
+    HSDA == "FS" ~ "Fraser South",
+    HSDA == "KB" ~ "Kootenay Boundary",
+    HSDA == "NE" ~ "Northeast",
+    HSDA == "NI" ~ "Northern Interior",
+    HSDA == "NSCG" ~ "North Shore/Coast Garibaldi",
+    HSDA == "NVI" ~ "North Vancouver Island",
+    HSDA == "NW" ~ "Northwest",
+    HSDA == "OK" ~ "Okanagan",
+    HSDA == "RICH" ~ "Richmond",
+    HSDA == "SVI" ~ "South Vancouver Island",
+    HSDA == "TCS" ~ "Thompson Cariboo Shuswap",
+    HSDA == "VAN" ~ "Vancouver"))
+
+
+# defining input variables
+
+current_year <- as.numeric(format(Sys.Date(), "%Y"))
+# years <- seq(current_year, 2003, by = -1 )
+years <- c(#2024, 
+           2014:2003)
+
+Culex <- c("Culex pipiens",	"Culex tarsalis",	"Culex territans")
+species <- c("All species", "Aedes",	"Anopheles", "Coquillettidia", Culex, "Culiseta")
+
+# Define grouped HSDA structure
+HSDA_groups <- list(
+  "All HSDAs" = "All HSDA's", 
+  "Fraser Health" = c("Fraser East", "Fraser North", "Fraser South"),
+  "Vancouver Island" = c("Central Vancouver Island", "North Vancouver Island", "South Vancouver Island"),
+  "Interior Health" = c("Okanagan", "Thompson Cariboo Shuswap", "East Kootenay", "Kootenay Boundary"),
+  "Northern Health" = c("Northeast", "Northern Interior", "Northwest"),
+  "Vancouver Coastal Health" = c("North Shore/Coast Garibaldi", "Richmond", "Vancouver")
+)
+
+# Reconstruct `HSDA_full_names` from `HSDA_groups` so the server code works without modification
+HSDA_full_names <- unlist(HSDA_groups, use.names = FALSE)
+
+# Recreate `HSDA_reverse_map` where each HSDA maps to itself.
+HSDA_reverse_map <- setNames(HSDA_full_names, HSDA_full_names)
+
+
+
+```
+
+
+
+<br>
+
+
+#### This report features information on detections of West Nile virus (WNV) in human and animal populations in British Columbia. {.unlisted .unnumbered}
+
+
+#### This page is updated as cases are reported (Last Updated: **`r Sys.Date()`**)
+
+<br>
+
+
+
+```{r key-message, echo=FALSE, message=FALSE, warning=FALSE}
+
+key_message_lines <- readLines("www/key_messages.txt", warn = FALSE)
+
+# Convert text lines into bullet points
+key_message_list <- lapply(key_message_lines, function(line) {
+    tags$li(line, style = "font-size: 16px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: black; margin: 5px auto;")
+})
+
+card(   
+    card_header(   
+        tags$div(   
+            "Key Messages",   
+            style = "background-color: #D3EDEF; color: black; padding: 10px; font-size: 18px; font-family: 'Helvetica Neue'
+                     border-top-left-radius: 8px; border-top-right-radius: 8px; font-weight: bold; width: 100%;"
+        )   
+    ),   
+    tags$ul(   
+        key_message_list, 
+        style = "padding: 10px;"
+    ),   
+    style = "border: 1px solid #ccc; border-radius: 8px !important; font-family: 'Helvetica Neue'
+             box-shadow: 2px 2px 6px rgba(0,0,0,0.1) !important; width: 100%;"
+)
+
+
+```
+
+<br>
+
+
+![](images/Line1_long.png)
+
+
+
+
+
+<div class="section_topic1">
+
+# West Nile Virus
+
+```{r wnv-message, echo=FALSE, message=FALSE, warning=FALSE}
+
+layout_columns(
+  # TEXT COLUMN (40%)
+  card(
+    tags$p(
+      "WNV primarily affects birds, with corvids such as crows, jays, and magpies usually dying once infected. Humans and horses are incidental hosts for WNV and can get infected but are unable to transmit the virus to other animals or people. West Nile virus (WNV) surveillance in British Columbia has been conducted through testing horses, sick or dead corvids, and humans who have symptoms compatible with WNV. Blood and organ donations are also screened for WNV.",
+      style = "font-size: 16px; color: #004987;"
+    ),
+    width = 4
+  ),
+
+  # VALUE BOX COLUMN (60%)
+  card(
+     tags$p("WNV detections this year:", 
+            style = "font-size: 16px; margin: 0px !important; color:#004987; font-weight: bold;"),
+    layout_columns(
+      # VALUE BOX 1
+      value_box(
+        title = NULL,  # required, so just leave it empty
+        value = tagList(
+                    tags$p("0", style = "font-size: 26px; font-weight: bold; margin: 0; text-align: center; color: #ffffff;"),
+                    tags$p("Human cases", style = "font-size: 13px; margin: 0; text-align: center; color: #ffffff;")
+                    ),
+        #showcase = bs_icon("person-fill", size = "1.3em", fill = "#ffffff"),
+         showcase = tags$img(src = "www/person-icon.svg", height = "50px"),
+        style = "border: 0px solid #003878; border-radius: 8px;"
+                ),
+
+      # VALUE BOX 2
+      value_box(
+        title = NULL,
+        value = tagList(
+                    tags$p("0", style = "font-size: 26px; font-weight: bold; margin: 0; text-align: center; color: #ffffff;"),
+                    tags$p("Positive horses", style = "font-size: 13px; margin: 0; text-align: center; color: #ffffff;")
+                    ), 
+        showcase = tags$img(src = "www/horse-icon.svg", height = "50px"),
+        style = "border: 0px solid #003878; border-radius: 8px;"
+      ),
+      # VALUE BOX 3
+      value_box(
+        title = NULL,
+        tagList(
+                    tags$p("0", style = "font-size: 26px; font-weight: bold; margin: 0; text-align: center; color: #ffffff;"),
+                    tags$p("Positive corvids", style = "font-size: 12px; margin: 0; text-align: center; color: #ffffff;")
+                    ),
+        showcase = tags$img(src = "www/bird-icon.svg", height = "50px"),
+        style = "border: 0px solid #003878;; border-radius: 8px;"
+      ),
+      widths = c(4, 4, 4)  # even split within 60%
+    ),
+    width = 8,
+    fill = FALSE,
+    max_height = "160px"
+  )
+)
+
+
+```
+
+
+
+
+```{r, epi-curve, context='render', echo=FALSE, message=FALSE, warning=FALSE}
+
+indicators_human <- c("Cases by location of acquisition", "Cases by clinical presentation")
+indicators_animal <- c("Horses", "Corvids", "Mosquito Pools")
+
+# Epi Curve UI
+
+fluidPage(
+  layout_columns(
+    card(
+  id = "smallTabs",
+  tabsetPanel(
+    tabPanel("Human Cases",
+             #br(),
+             selectInput("indicator_human", "Select Indicator:", indicators_human),
+             #br(),
+             plotlyOutput("epi_curve_human", 
+                          width  = '100%',
+                          height = 500)
+    ),
+    
+    tabPanel("Animal Detections",
+             #br(),
+            pickerInput(
+                   "indicator_animal",
+                   "Select species:",
+                    indicators_animal,
+                    selected = c("Horses", "Corvids", "Mosquito Pools"),
+                 options = list(
+                  "actions-box" = TRUE,
+                   noneSelectedText = "Please select"),
+                multiple = TRUE),
+             #br(),
+            plotlyOutput("epi_curve_animal", 
+                          width  = '100%',
+                          height = 500)
+    )
+  )
+    )
+  )
+)
+
+
+```
+
+
+```{r, context='server', echo=FALSE, message=FALSE, warning=FALSE}
+
+#Epi curve server
+
+human_title <- reactive({
+    paste("Human Cases of West Nile virus in British Columbia by", 
+         tools::toTitleCase(gsub("Cases by ", "", input$indicator_human))) 
+  })
+  
+animal_title <- reactive({
+  selected <- input$indicator_animal
+  
+  if (length(selected) == 1) {
+    paste("Animal Cases of West Nile virus in British Columbia for", selected)
+  } else {
+    paste("Animal Cases of West Nile virus in British Columbia by Species")
+  }
+})
+  
+
+  # Reactive Data Filtering for Human Cases
+  human_data <- reactive({
+    data <- human_wnv_cases
+    
+    if (input$indicator_human == "Cases by location of acquisition") {
+      data <- data %>%
+        mutate(Category = case_when(
+          Travel == "Yes" ~ "Travel-related",
+          Travel == "No" ~ "Locally acquired",
+          TRUE ~ "Unknown"
+        )) %>%
+        group_by(Year, Category) %>%
+        summarise(Cases = n(), .groups = "drop") %>%
+        complete(Year = full_years, Category, fill = list(Cases = 0)) %>%  
+        mutate(Description = paste(
+          Cases, ifelse(Cases == 1, "case", "cases"), "of WNv", ifelse(Cases == 1, "was", "were"), "reported in people with",
+          ifelse(Category == "Travel-related", "history of travel, outside of British Columbia", "no travel history"),
+          "in", Year
+        ))
+      
+    } else if (input$indicator_human == "Cases by clinical presentation") {
+      data <- data %>%
+        mutate(`Disease classification` = case_when(
+          `Disease classification` == "WNNS" ~ "West Nile Neurological Syndrome",
+          `Disease classification` == "WN non-NS" ~ "West Nile non-Neurological Syndrome",
+          `Disease classification` == "WNAI" ~ " West Nile Asymptomatic Infection",
+          TRUE ~ "Unspecified")) %>%
+        group_by(Year, Category = `Disease classification`) %>%
+        summarise(Cases = n(), .groups = "drop") %>%
+        complete(Year = full_years, Category, fill = list(Cases = 0)) %>% 
+        mutate(Description = paste(
+          Cases, ifelse(Cases == 1, "case", "cases"),"of WNv", ifelse(Cases == 1, "was", "were"), "reported with", Category, "in", Year
+        ))
+    }
+    
+    return(data)
+  })
+  
+  
+  # Reactive Data Filtering for Animal Cases
+animal_data <- reactive({
+  data <- animal_wnv_cases
+  
+  if (is.null(input$indicator_animal) || length(input$indicator_animal) == 0) {
+    showNotification("Please select at lease one species.", duration = 2, type = "warning")
+    return(NULL)
+  }
+  
+  selected_animals <- input$indicator_animal
+  
+  data <- data %>%
+    filter(`Animal Type` %in% c("Horse", "Corvid", "Mosquito Pool"))
+  
+  data <- data %>%
+    mutate(Category = case_when(
+      `Animal Type` == "Horse" & Travel == "Yes" ~ "Horses (travel-related)",
+      `Animal Type` == "Horse" & Travel == "No" ~ "Horses (locally acquired)",
+      `Animal Type` == "Corvid" ~ "Corvids",
+      `Animal Type` == "Mosquito Pool" ~ "Mosquito Pools",
+      TRUE ~ "Unknown"
+    ))
+  
+  data <- data %>%
+    filter(
+      (("Horses" %in% selected_animals & grepl("Horses", Category)) |
+       ("Corvids" %in% selected_animals & Category == "Corvids") |
+       ("Mosquito Pools" %in% selected_animals & Category == "Mosquito Pools"))
+    ) %>%
+    group_by(Year, Category) %>%
+    summarise(Cases = n(), .groups = "drop") %>%
+    complete(Year = full_years, Category, fill = list(Cases = 0)) %>%
+    mutate(Description = paste(
+      Cases, ifelse(Cases == 1, "case", "cases"), "of WNv in", Category, "in", Year
+    ))
+  
+  return(data)
+})
+
+  
+  # Stacked Bar Chart for Human Cases
+  output$epi_curve_human <- renderPlotly({
+    req(human_data())  
+    
+  plot_ly(
+    data = human_data(),
+    x = ~Year,
+    y = ~Cases,
+    color = ~Category,
+    text = ~Description,
+    type = 'bar',
+    hoverinfo = 'text',
+    colors = custom_colors) %>% 
+  layout(
+    title = list(text = human_title(), 
+                 font = list(size = 18, 
+                             family = 'Helvetica Neue', 
+                             color = '#808080', 
+                             weight = 'bold'),
+                 x = 0.5 ), # Center the title
+    xaxis = list(
+      title = list(text = 'Year', font = list(size = 14, family = 'Helvetica Neue', color = 'grey')),
+      tickangle = 90,
+      tickvals = seq(min(human_data()$Year, na.rm = TRUE), max(human_data()$Year, na.rm = TRUE), by = 1),
+      zeroline = FALSE),
+    yaxis = list(
+      title = list(text = 'Cases', font = list(size = 14, family = 'Helvetica Neue', color = 'grey')),
+      range = c(0, 24),
+      tickvals = seq(0, 24, by = 2),
+      gridcolor = 'dark grey'
+    ),
+    barmode = 'stack',  
+    plot_bgcolor = 'white',
+    paper_bgcolor = 'white',
+    legend = list(
+      title = list(text = "Click to add or remove:", font = list(size = 12, color = 'black')),
+      orientation = "h",  # Set legend to horizontal
+      x = 0.4,  # Center legend horizontally
+      y = 1.1, # Move legend below the title
+      xanchor = "center"
+      #yanchor = "top"
+    ),
+    margin = list(t = 100)  
+      ) %>% 
+  config(
+        displayModeBar = TRUE, 
+        displaylogo = FALSE,  
+        modeBarButtonsToRemove = c( 'pan2d', 'select2d', 'lasso2d')  # Remove unnecessary buttons
+      ) 
+  })
+  
+  # Stacked Bar Chart for Animal Cases
+  output$epi_curve_animal <- renderPlotly({
+    req(animal_data())
+    
+plot_ly(
+  data = animal_data(),
+  x = ~Year,
+  y = ~Cases,
+  color = ~Category,
+  text = ~Description,
+  type = 'bar',
+  hoverinfo = 'text',
+  colors = custom_colors
+) %>% 
+  layout(
+    title = list(text = animal_title(), font = list(size = 18, family = 'Helvetica Neue', color = '#808080', weight = 'bold'),
+                 x = 0.5  # Center the title
+                 ),
+    xaxis = list(
+      title = list(text = 'Year', font = list(size = 14, family = 'Helvetica Neue', color = 'grey')),
+      tickangle = 90,
+      tickvals = seq(min(animal_data()$Year, na.rm = TRUE), max(animal_data()$Year, na.rm = TRUE), by = 1),
+      zeroline = FALSE
+    ),
+    yaxis = list(
+      title = list(text = 'Cases', font = list(size = 14, family = 'Helvetica Neue', color = 'grey')),
+      range = c(0, 18),
+      tickvals = seq(0, 18, by = 2),
+      gridcolor = 'dark grey'
+    ),
+    barmode = 'stack',  # Stacked bar chart
+    plot_bgcolor = 'white',
+    paper_bgcolor = 'white',
+    legend = list(
+      title = list(text = "Click to add or remove:", font = list(size = 12, color = 'black')),
+      orientation = "h",  # Set legend to horizontal
+      x = 0.5,  # Center legend horizontally
+      y = 1.1, # Move legend below the title
+      xanchor = "center",
+      yanchor = "top"
+    ),
+    margin = list(t = 100)  
+      ) %>% 
+  config(
+        displayModeBar = TRUE, 
+        displaylogo = FALSE, 
+        modeBarButtonsToRemove = c('zoom2d', 'pan2d', 'select2d', 'lasso2d')  # Remove unnecessary buttons
+      )
+
+  })
+
+
+```
+
+<br>
+
+
+
+<div class="section_topic2">
+
+# Location of WNV Detections in British Columbia
+
+```{r, wnv-detection, context='render', echo=FALSE, message=FALSE, warning=FALSE}
+
+fluidRow(
+      # Year slider
+      column(7, 
+        sliderInput("slider",
+                    "Select Year(s):",
+                    min = min(WNV_detections$year),
+                    max = year(Sys.Date()),
+                    value = c(min(WNV_detections$year), year(Sys.Date())),
+                    sep = "",
+                    ticks = FALSE,
+                    step = 1, 
+                    dragRange = FALSE)),
+
+      # Species picker
+      column(5,
+             pickerInput(
+        inputId = "select_species",
+        label = "Select Species:",
+        choices = c(
+          "Humans" = "Human",
+          "Horses" = "Horse",
+          "Corvids" = "Corvid",
+          "Mosquito Pools" = "Mosquito Pool"
+        ),
+        selected = c("Human", "Horse", "Corvid", "Mosquito Pool"),
+        options = list(
+          "actions-box" = TRUE,
+          noneSelectedText = "Please select"
+        ),
+        multiple = TRUE
+      )))
+
+  fluidRow(
+      tags$style(type = "text/css", "#map {height: calc(84vh - 80px) !important;}"),
+      leafletOutput("map")
+)
+
+```
+
+```{r, context='server', echo=FALSE, message=FALSE, warning=FALSE}
+
+#create reactive data for map
+    reactive_data_map = reactive({
+      
+      req(input$slider)
+      
+       WNV_detections%>%
+        group_by(lha)%>%
+        filter(between(year,input$slider[1],input$slider[2]),
+               animal_type %in% (input$select_species))%>%
+        count()%>%
+        right_join(., lha, by = c("lha" = "LOCAL_HLTH_AREA_NAME"))%>%
+        # filter(HLTH_AUTHORITY_NAME %in% (input$select_HA))%>%
+      mutate(n = replace_na(n, 0))})
+  
+    #map
+     
+          output$map = renderLeaflet ({
+       leaflet(lha) %>%
+       addTiles() %>%
+       setView(lng = -122.649791, lat = 52.813212, zoom = 6)%>%
+       addLegend(
+         colors = c('#E2E2E2', '#fcba97', '#D67229', '#8d4004', "#421f03"),
+         values = c("0", "1-4", "5-9", "10-14", "15+"),
+         labels = c("0", "1-4", "5-9", "10-14", "15+"),
+         opacity = 0.8,
+         title = " <center> WNv <br> Detections",
+         position = "bottomleft")})
+
+     observe({
+       
+       #labels to show on hover of LHA
+       labels = case_when(input$slider[1] == input$slider[2] ~ sprintf(
+         "<strong> %s</strong><br/> Year: %s</strong><br/>West Nile virus detections: %g",
+         reactive_data_map()$lha,
+         input$slider[1],
+         reactive_data_map()$n),
+         input$slider[1] != input$slider[2] ~ sprintf(
+           "<strong> %s</strong><br/> Years: %s</strong> - %s</strong><br/>West Nile virus detections: %g",
+           reactive_data_map()$lha,
+           input$slider[1],
+           input$slider[2],
+           reactive_data_map()$n))%>%
+         lapply(htmltools::HTML)
+
+        #add polygons
+       
+        map = leafletProxy("map", data = reactive_data_map()) %>%
+          clearShapes() %>%
+          clearMarkers()
+        
+        req(input$select_species %in% c("Human", "Horse", "Corvid", "Mosquito Pool"))
+        map %>% addPolygons(
+            data = reactive_data_map()$geometry,
+            fillColor = case_when(reactive_data_map()$n >= 1 & reactive_data_map()$n <=4 ~ "#fcba97",
+                                          reactive_data_map()$n >= 5 & reactive_data_map()$n <=9 ~ "#D67229",
+                                          reactive_data_map()$n >= 10 & reactive_data_map()$n <=14 ~ "#8d4004",
+                                          reactive_data_map()$n >= 15 ~ "#421f03",
+                                          reactive_data_map()$n == 0 ~ "#E2E2E2"),
+                    weight = 1,
+                    opacity = 0.8,
+                    color = "#696868",
+                    fillOpacity = case_when(reactive_data_map()$n == 0 ~ 0.7,
+                                            reactive_data_map()$n > 0 ~ 0.8),
+          highlightOptions = highlightOptions( #outline of FSAs on hover
+            weight = 4,
+            color = "#46ebeb",
+            fillOpacity = 0.7,
+            bringToFront = TRUE),
+          label = labels)
+  }
+)
+
+```
+</div>
+
+<br>
+<div class="section_topic3">
+
+
+![](images/Line1_long.png)
+
+# Mosquito Surveillance
+
+#### From 2003-2014, the BCCDC operated a comprehensive WNV surveillance program which included identifying mosquito breeding areas, larval and adult mosquito monitoring, and dead corvid testing. At the time the program was initiated, WNV was present in neighbouring jurisdictions but not yet present in BC. Active mosquito surveillance was discontinued as a component of the WNV surveillance program after 2014. Throughout the course of this program, WNV was detected in 11 mosquito pools of _Culex tarsalis_ in the South Okanagan (10 in 2009, 1 in 2013).
+
+<!-- #### In the summer of 2024, ten years after routine mosquito surveillance was last conducted in the province, an 8-week pilot mosquito surveillance program was conducted in the Nanaimo and Osoyoos regions and captured mosquitoes were pathogen tested for Snowshoe hare and Jamestown Canyon viruses of the California serogroup in addition to WNV.   -->
+
+<br>
+
+```{r, map-table, context='render', echo=FALSE, message=FALSE, warning=FALSE}
+
+# MOSQUITO TABLE & MAP UI 
+
+  fluidRow(
+    column(4, selectInput("year", "Select Year", years, selected = "2003")),
+    column(4,
+
+  #Table View (Multi-select)
+            conditionalPanel(
+                      condition = "input.toggle_view == false",
+                      pickerInput("m_specie_table", "Select Mosquito Species:",
+                      choices = species,
+                      selected = "All species",
+                      multiple = TRUE,
+                      options = list(
+                                     "actions-box" = TRUE,
+                                      noneSelectedText = "Please select a species"))),
+
+  # Map View (Single-select)
+            conditionalPanel(
+                      condition = "input.toggle_view == true",
+                      pickerInput("m_specie_map", "Select Mosquito Species:",
+                      choices = species,
+                      selected = "All species",
+                      multiple = FALSE,
+                      options = list(
+                                    noneSelectedText = "Please select a species")))),
+    column(4, selectInput("HSDA", "Select HSDA:", choices = HSDA_groups, selected = "All HSDA's", multiple = TRUE)))
+
+
+  fluidRow(
+  column(6, 
+    materialSwitch("toggle_view", label = "Map View", status = "primary", value = FALSE, inline = TRUE)
+  ),
+  column(6, align = "right",
+    downloadButton("downloadTable", "Download Data")
+  )
+  )
+
+  fluidRow(
+  conditionalPanel(
+    condition = "input.toggle_view == false",
+    column(12, dataTableOutput("summaryTable"))
+  ),
+  conditionalPanel(
+    condition = "input.toggle_view == true",
+    column(12, leafletOutput("mosquito_map", height = 680))
+  )
+  )
+
+
+
+```
+
+```{r, context='server', echo=FALSE, message=FALSE, warning=FALSE}
+
+# MOSQUITO TABLE & MAP SERVER
+
+selected_species <- reactive({
+  if (input$toggle_view) {
+    input$m_specie_map  # Single-select for map
+  } else {
+    input$m_specie_table  # Multi-select for table
+  }
+})
+
+observeEvent(input$m_specie_table, {
+  if ("All species" %in% input$m_specie_table && length(input$m_specie_table) > 1) {
+    updatePickerInput(session, "m_specie_table", selected = "All species")
+    showNotification("Cannot select 'All species' with other species. Reset to 'All species'.", duration = 2, type = "warning")
+  }
+})
+
+observeEvent(input$HSDA, {
+  if ("All HSDA's" %in% input$HSDA && length(input$HSDA) > 1) {
+    updateSelectInput(session, "HSDA", selected = "All HSDA's")
+    showNotification("Cannot select 'All HSDA's' with other HSDAs. Reset to 'All HSDA's'.", duration = 2, type = "warning")
+  }
+})
+
+observeEvent(input$year, {
+  if (input$year %in% 2009:2014) {
+    cul <- c("Culex pipiens", "Culex tarsalis")
+  } else {
+    cul <- c("Culex pipiens", "Culex tarsalis", "Culex territans")
+  }
+  
+  species_choices <- c("All species", "Aedes", "Anopheles", "Coquillettidia", cul, "Culiseta")
+  
+  table_selection <- input$m_specie_table
+  map_selection <- input$m_specie_map
+  
+  
+  updated_table_selection <- intersect(table_selection, species_choices)
+  if (length(updated_table_selection) == 0) {
+    updated_table_selection <- "All species"
+  }
+  
+  updated_map_selection <- if (map_selection %in% species_choices) {
+    map_selection
+  } else {
+    "All species"
+  }
+  
+  updatePickerInput(session, "m_specie_table", choices = species_choices, selected = updated_table_selection)
+  updatePickerInput(session, "m_specie_map", choices = species_choices, selected = updated_map_selection)
+})
+
+
+
+filtered_data_table <- reactive({
+  if (is.null(input$HSDA) || length(input$HSDA) == 0) {
+  showNotification("Please select at least one HSDA.", duration = 2, type = "warning")
+  return(NULL)
+}
+  mosquito_count_reports1 %>%
+    filter(Year == input$year) %>%
+    filter(HSDA %in% if ("All HSDA's" %in% input$HSDA) HSDA_full_names[-1] else input$HSDA)
+})
+
+  
+
+# Reactive expression for summary table for m_species
+summary_table <- reactive({
+  req(filtered_data_table()) 
+  
+  data <- filtered_data_table()
+  species <- selected_species()
+  raw_species <- species  # Store original selection before modifying
+  
+
+  # stops the error message by:
+  # Removing "All species" from the output if "All species" is selected
+  if ("All species" %in% species) {
+    species <- setdiff(species, "All species") }
+
+  # Handle special case where Culex territans shouldn't be summarized
+  include_territans <- input$year %in% 2003:2008
+  
+  if (length(raw_species) == 1 && raw_species == "All species") {
+  if (include_territans) {
+    # Include Culex territans
+    data %>%
+      group_by(HSDA) %>%
+      summarize(
+        Aedes = round(sum(Aedes, na.rm = TRUE), 0),
+        Anopheles = round(sum(Anopheles, na.rm = TRUE), 0),
+        Coquillettidia = round(sum(Coquillettidia, na.rm = TRUE), 0),
+        `Culex pipiens` = round(sum(`Culex pipiens`, na.rm = TRUE), 0),
+        `Culex tarsalis` = round(sum(`Culex tarsalis`, na.rm = TRUE), 0),
+        `Culex territans` = round(sum(`Culex territans`, na.rm = TRUE), 0),
+        Culiseta = round(sum(Culiseta, na.rm = TRUE), 0),
+        Total = round(sum(
+          Aedes, Anopheles, Coquillettidia, `Culex pipiens`,
+          `Culex tarsalis`, `Culex territans`, Culiseta,
+          na.rm = TRUE
+        ), 0),
+        .groups = "drop"
+      )
+  } else {
+    # Exclude Culex territans
+    data %>%
+      group_by(HSDA) %>%
+      summarize(
+        Aedes = round(sum(Aedes, na.rm = TRUE), 0),
+        Anopheles = round(sum(Anopheles, na.rm = TRUE), 0),
+        Coquillettidia = round(sum(Coquillettidia, na.rm = TRUE), 0),
+        `Culex pipiens` = round(sum(`Culex pipiens`, na.rm = TRUE), 0),
+        `Culex tarsalis` = round(sum(`Culex tarsalis`, na.rm = TRUE), 0),
+        Culiseta = round(sum(Culiseta, na.rm = TRUE), 0),
+        Total = round(sum(
+          Aedes, Anopheles, Coquillettidia, `Culex pipiens`,
+          `Culex tarsalis`, Culiseta,
+          na.rm = TRUE
+        ), 0),
+        .groups = "drop"
+      )
+  }
+} else {
+
+  if (length(species) == 0) {
+    return(tibble(HSDA = unique(data$HSDA)))
+  }
+    
+    data %>%
+      group_by(HSDA) %>%
+      summarize(
+        across(all_of(species), ~ round(sum(.x, na.rm = TRUE), 0)),
+        .groups = "drop"
+      )
+  }
+
+})
+
+
+# Render the summary table (Output 1)
+output$summaryTable <- DT::renderDataTable({
+  req(summary_table())
+  
+  summary_table() %>%
+    mutate(
+      HSDA = ifelse(HSDA %in% HSDA_full_names, HSDA, "Unknown HSDA"),
+      across(where(is.numeric), as.integer) 
+    ) %>%
+    DT::datatable(
+      options = list(
+        paging = FALSE,         
+        searching = FALSE,      
+        ordering = FALSE,      
+        #scrollY = TRUE, 
+        scrollX = TRUE, #new addition
+        #autoWidth = TRUE, 
+        dom = 'tr',
+        class = 'compact',  
+        columnDefs = list(
+          list(className = 'dt-left', targets = 0),  
+          list(className = 'dt-center', targets = "_all")  
+        )
+      ),
+      rownames = FALSE
+    ) %>%
+    
+    formatStyle(
+      columns = colnames(summary_table()),
+      textAlign = 'center' #change the table enteries, center, left, right.
+      #`vertical-align` = "bottom"
+      #fontWeight = 'bold'
+    ) %>%
+    
+    formatStyle(
+      "HSDA",  
+      textAlign = 'left'
+    ) 
+})
+
+
+
+output$downloadTable <- downloadHandler(
+  filename = function() {
+    paste("Mosquito_Surveillance_", input$year, ".xlsx", sep = "")
+  },
+  content = function(file) {
+    write_xlsx(summary_table(), file)  
+  }
+)
+
+#map server code - reactive expression for filtered data (year, HSDA)
+filtered_data_map <- reactive({
+  merged_data <- HSDA_layer %>%
+    dplyr::left_join(mosquito_count_reports1, 
+                     by = c("HLTH_SERVICE_DLVR_AREA_NAME" = "HSDA")) %>%
+    filter(Year == input$year)%>%
+    filter(HLTH_SERVICE_DLVR_AREA_NAME %in% 
+             if ("All HSDA's" %in% input$HSDA) HSDA_full_names 
+           else input$HSDA) %>%
+    group_by(HLTH_SERVICE_DLVR_AREA_NAME, Year) %>%
+    ungroup() %>%
+    select(HLTH_SERVICE_DLVR_AREA_NAME, Year, geometry, Aedes, Anopheles, Coquillettidia, 
+           `Culex pipiens`,	`Culex tarsalis`,	`Culex territans`, Culiseta, Total) %>%
+    rename(HSDA = HLTH_SERVICE_DLVR_AREA_NAME)
+  
+  # Check if dataset is empty
+  if (nrow(merged_data) == 0) {
+    showNotification("Please select at least one HSDA.", duration = 2, type = "warning")
+    return(NULL)
+  }
+  
+  species <- selected_species()
+
+if (!(length(species) == 1 && species == "All species")) {
+  merged_data <- merged_data %>%
+    mutate(`Selected Total` = rowSums(across(all_of(species)), na.rm = TRUE))
+}
+
+  
+  # Convert to sf object
+  st_as_sf(merged_data)
+})
+
+
+# Reactive expression for summary computation for m_species
+map_summary <- reactive({
+  data1 <- filtered_data_map()
+  species <- selected_species()  # replace input$m_specie
+
+  if (is.null(data1) || nrow(data1) == 0) {
+    return(NULL) 
+  }
+
+# If multiple species selected for the table, automatically reset to "All species" when switched to map view
+  if (length(species) != 1 || species == "All species") {
+    species <- "All species"  # Force it for the map summary
+  }
+
+  if (species == "All species") {
+    data1 %>%
+      group_by(HSDA, Year) %>%
+      summarize(
+        Aedes = round(sum(Aedes, na.rm = TRUE), 0),
+        Anopheles = round(sum(Anopheles, na.rm = TRUE), 0),
+        Coquillettidia = round(sum(Coquillettidia, na.rm = TRUE), 0),
+        `Culex pipiens` = round(sum(`Culex pipiens`, na.rm = TRUE), 0),
+        `Culex tarsalis` = round(sum(`Culex tarsalis`, na.rm = TRUE), 0),
+        `Culex territans` = round(sum(`Culex territans`, na.rm = TRUE), 0),
+        Culiseta = round(sum(Culiseta, na.rm = TRUE), 0),
+        Total = round(sum(Aedes, Anopheles, Coquillettidia, `Culex pipiens`, 
+                          `Culex tarsalis`, `Culex territans`, Culiseta, na.rm = TRUE), 0),
+        .groups = "drop"
+      )
+  } else {
+    data1 %>%
+      group_by(HSDA, Year) %>%
+      summarize(
+        `Total Cases` = round(sum(.data[[species]], na.rm = TRUE), 0),
+        .groups = "drop"
+      )
+  }
+})
+
+
+observeEvent(input$toggle_view, {
+  if (input$toggle_view) {
+    
+    if (length(input$m_specie_table) > 1) {
+      updatePickerInput(session, "m_specie_map", selected = "All species")
+      
+      showNotification("Reverting to All species for map view.", type = "message")
+    } else {
+      updatePickerInput(session, "m_specie_map", selected = input$m_specie_table)
+    }
+  }
+})
+
+
+# Render the interactive map using leaflet (Output 2)
+
+output$mosquito_map <- renderLeaflet({
+  req(map_summary())  
+
+  #Determine which colour to use for coloring
+  species_col <- if (length(selected_species()) == 1 && selected_species() == "All species") {
+  "Total"
+} else {
+  "Selected Total"
+}
+  
+  data <- filtered_data_map()
+  
+  # Check if data is available
+  if (is.null(data) || nrow(data) == 0) {
+    showNotification("No data available for the selected filters.", duration = 2, type = "warning")
+    
+    return(leaflet() %>%
+             addTiles() %>%
+             setView(lng = -122.649791, lat = 52.813212, zoom = 6))
+  }
+  
+  # Check if the species column exists
+if (!(species_col %in% colnames(data))) {
+  showNotification("Selected species data is unavailable.", duration = 2, type = "error")
+  return(NULL)
+}
+
+# Check if the selection results in all NA values
+if (!(species_col %in% colnames(data)) || all(is.na(data[[species_col]]) | data[[species_col]] == 0)) {
+
+  showNotification(
+    paste0("Error: ", paste(selected_species(), collapse = ", "), 
+           " wasn't searched for in ", input$year, ". Reverting to All species."),
+    duration = 4,
+    type = "error"
+  )
+
+  return(leaflet() %>% 
+           addTiles() %>% 
+           setView(lng = -122.649791, lat = 52.813212, zoom = 6) %>%
+           addPolygons(
+             data = HSDA_layer,  
+             fillColor = "#D3D3D3",  
+             weight = 1,
+             opacity = 0.8,
+             color = "#696868",
+             fillOpacity = 0.75, 
+             label = NULL
+           ))
+}
+
+  
+  # Get unique values in selected data
+  unique_values <- unique(data[[species_col]][!is.na(data[[species_col]])])
+  
+  # Determine color binning 
+  if (length(unique_values) == 1) {
+    # If only one unique value
+    pal <- colorFactor(palette = c("#D3D3D3", "#FFEDA0"), domain = unique_values)
+  } else {
+    
+    min_value <- min(data[[species_col]], na.rm = TRUE)
+    max_value <- max(data[[species_col]], na.rm = TRUE)
+    bins <- pretty(c(min_value, max_value), n = 5)
+    pal <- colorBin(palette = "YlOrRd", domain = data[[species_col]], bins = bins, na.color = "#D3D3D3")
+  }
+  
+  # hover label
+  data$tooltip <- paste0(
+    "<b>", data$HSDA, "</b><br>",
+    "Year: ", input$year, "<br>",
+    "Species: ", paste(selected_species(), collapse = ", "), "<br>",
+    "Mosquito Count: ", format(data[[species_col]], big.mark = ",")
+  )
+  
+  # Leaflet map
+  leaflet(data) %>%
+    addTiles() %>%
+    setView(lng = -122.649791, lat = 52.813212, zoom = 6) %>%
+    
+    addPolygons(
+      data = HSDA_layer,  
+      fillColor = "#D3D3D3",  
+      weight = 1,
+      opacity = 0.8,
+      color = "#696868",
+      fillOpacity = 0.75, 
+      label = NULL
+    )  %>%
+    
+    addPolygons(
+      fillColor = ~pal(get(species_col)),  
+      weight = 1,
+      opacity = 1,
+      color = "#696868",
+      fillOpacity = 0.7,
+      highlightOptions = highlightOptions(
+        weight = 4,
+        color = "#46ebeb",
+        bringToFront = TRUE
+      ),
+      label = ~lapply(tooltip, htmltools::HTML), 
+      labelOptions = labelOptions(
+        style = list("font-weight" = "normal", "font-size" = "12px"),
+        textsize = "12px",
+        direction = "auto"
+      )
+    ) %>%
+    addLegend(
+      pal = pal,
+      values = data[[species_col]],
+      title = paste("Mosquito Count:", paste(selected_species(), collapse = ","), input$year),
+      position = "bottomleft",
+      opacity = 0.8,
+      labFormat = labelFormat(
+        big.mark = ",", 
+        digits = 0,     
+        transform = function(x) round(x)
+      )
+    )
+})
+
+
+```
+
+<!-- Start of the custom panel -->
+<div class="custom-panel">
+
+## Mosquitoes of British Columbia {.tabset}
+
+### _Aedes _ spp.
+
+<div class="sub_bullet">
+```{r, results='asis', echo=FALSE, message=FALSE, warning=FALSE}
+for (line in aedes) {
+  cat(line, '\n')
+}
+```
+</div>
+
+### _Anopheles_ spp.
+
+<div class="sub_bullet">
+```{r, results='asis', echo=FALSE, message=FALSE, warning=FALSE}
+for (line in anopheles) {
+  cat(line, '\n')
+}
+```
+</div>
+
+### _Culex_ spp.
+
+<div class="sub_bullet">
+```{r, results='asis', echo=FALSE, message=FALSE, warning=FALSE}
+for (line in culex) {
+  cat(line, '\n')
+}
+```
+</div>
+
+### _Culiseta_ spp.
+
+<div class="sub_bullet">
+```{r, results='asis', echo=FALSE, message=FALSE, warning=FALSE}
+for (line in culiseta) {
+  cat(line, '\n')
+}
+```
+</div>
+
+### _Coquillettidia_ spp.
+<div class="sub_bullet">
+```{r, results='asis', echo=FALSE, message=FALSE, warning=FALSE}
+for (line in coquilletidia) {
+  cat(line, '\n')
+}
+```
+
+</div>
+
+</div> <!-- End of custom panel --> 
+
+## {-}
+
+
+
+![](images/Line1_long.png)
+
+
+<div class="section_topic4">
+# Supplementary Information {.tabset}
+
+
+## Data notes
+
+<div class="sub_bullet">
+```{r, results='asis', echo=FALSE, message=FALSE, warning=FALSE}
+for (line in data_notes_outbreak) {
+  cat(line, '\n')
+}
+```
+</div>
+
+<br>
+
+## Definitions
+
+<div class="sub_bullet">
+```{r, results='asis', echo=FALSE, message=FALSE, warning=FALSE}
+for (line in definitions_outbreak) {
+  cat(line, '\n')
+}
+```
+</div>
+<br>
+
+## Abbreviations
+
+```{r, results='asis', echo=FALSE, message=FALSE, warning=FALSE}
+for (line in abbreviations_outbreak) {
+  cat(line, '\n')
+}
+```
+<br>
+
+## Acknowledgements
+
+```{r, results='asis', echo=FALSE, message=FALSE, warning=FALSE}
+for (line in acknowledgements_outbreak) {
+  cat(line, '\n')
+}
+```
+<br>
+
+## References
+
+```{r, results='asis', echo=FALSE, message=FALSE, warning=FALSE}
+for (line in references) {
+  cat(line, '\n')
+}
+```
+<br>
+
+## Disclaimer
+
+```{r, results='asis', echo=FALSE, message=FALSE, warning=FALSE}
+for (line in disclaimer_outbreak) {
+  cat(line, '\n')
+}
+```
+</div>
+<br>
+
