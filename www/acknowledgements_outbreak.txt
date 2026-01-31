@@ -1,0 +1,7 @@
+The BC Centre for Disease Control provides services to a diverse population including First Nations, Métis Peoples, and Inuit living in various settings and communities across BC. As a provincial network, we operate on the unceded traditional and ancestral lands of First Nations. Our main office is located on the traditional and ancestral lands of the xʷməθkʷəy̓əm (Musqueum), Sḵwx̱wú7mesh Úxwumixw (Squamish Nation), and səlilwətaɬ (Tseil-Waututh Nation).
+
+Surveillance of mosquito-borne diseases is a shared responsibility between partners in the human health, environmental health, and animal health sectors. We gratefully acknowledge our partners at the regional health authorities (Fraser Health, Interior Health, Island Health, Northern Health, and Vancouver Coastal Health), BC Ministry of Agriculture and Food's Animal Health Centre, The BCCDC Public Health Laboratory, BCCDC Data and Analytic Services, and Canadian Blood Services for their continued collaboration.
+
+All components of this report were developed using the R computing language. Graphics and visualization were created using the tidyverse, ggplot, shiny and plotly packages.  
+
+R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.

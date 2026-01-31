@@ -1,0 +1,420 @@
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/style_new.css" media="screen" />
+  <link rel="stylesheet" type="text/css" href="../css/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" href="../css/base.css" media="screen" />
+  <link rel="stylesheet" type="text/css" href="../css/adjust_base_on_width.css" media="screen" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+
+
+  <style>
+    /* .try {
+        width: 20%;
+        background-color: pink;
+        margin: 50px auto;
+    } */
+    
+    html {
+        scroll-behavior: smooth;
+    }
+
+    .leftPanel {
+      /* top: 220px; */
+      left: 30px;
+      float: left;
+      position: relative;
+    }
+
+
+    /* how to navigate */
+    .dialog {
+      width: 1320px;
+      height: 820px;
+      padding: 5px;
+      border: 0;
+      border-radius: 0.5rem;
+      box-shadow: hsl(0 0% 0% / 10%) 0 0 0.5rem 0.25rem;
+      /* position: relative; */
+      margin: auto;
+    }
+
+.dialog::backdrop {
+  background: hsl(0 0% 0% / 50%);
+}
+
+.dialog-close-btn {
+ appearance: none;
+ background-color: transparent;
+ border: 0.125em solid #1A1A1A;
+ border-radius: 0.9375em;
+ box-sizing: border-box;
+ color: #3B3B3B;
+ cursor: pointer;
+ display: inline-block;
+ font-family: Roobert,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+ font-size: 16px;
+ font-weight: 600;
+ line-height: normal;
+ margin: 0;
+ min-height: 3.75em;
+ min-width: 0;
+ outline: none;
+ padding: 1em 2.3em;
+ text-align: center;
+ text-decoration: none;
+ transition: all 300ms cubic-bezier(.23, 1, 0.32, 1);
+ user-select: none;
+ -webkit-user-select: none;
+ touch-action: manipulation;
+ will-change: transform;
+
+ position: absolute;
+ bottom: 1em;
+ right: 610px;
+}
+
+.dialog-close-btn:disabled {
+ pointer-events: none;
+}
+
+.dialog-close-btn:hover {
+ color: #fff;
+ background-color: #1A1A1A;
+ box-shadow: rgba(0, 0, 0, 0.25) 0 8px 15px;
+ transform: translateY(-2px);
+}
+
+.dialog-close-btn:active {
+ box-shadow: none;
+ transform: translateY(0);
+}
+
+/* .dialog-close-btn {
+  font-size: 1.3em;
+  padding: 5px;
+  width: 100px;
+  height: 50px;
+  position: absolute;
+  bottom: .5em;
+  right: 610px;
+} */
+
+.dialog-open-btn {
+  border-radius: 6px;
+  width: 240px;
+  height: 40px;
+  background-image: url(../images/standard_button_bg_2x_text.png);
+  background-position: center;
+  background-size: cover;
+  border:none;
+  /* position: fixed; */
+  left: 3.5em;
+  /* top: 1030px; */
+  display: block;
+  margin-top: 5px;
+  margin-left: 6px;
+  cursor: pointer;
+}
+
+    
+  .link {
+    /* position: fixed; */
+    /*background: #e8e8e8;*/
+    left: 3em;
+    /* top: 312px; */
+    padding: 1em;
+    width: 18em;
+    /*height: 100vh;*/
+    line-height: 2;
+    color: #111;
+    display: inline-block;
+    margin-bottom: 15px;
+  }
+/* 
+  .link li a {
+    text-decoration: none;
+    font-size: 14px;
+  } */
+
+
+  /* Elevator */
+  .xtx-elevator .xtx-elevator-list li a:hover,
+  .xtx-elevator .xtx-elevator-list li a.active,
+  .link li a:hover {
+    display: inline-block;
+    padding-left: 8px;
+    font-weight: bold;
+    /* font-size: 14pt; */
+    color: #004987;
+    border-left: 4px solid #004987;
+    cursor: pointer;
+}
+    
+    .xtx-elevator {
+      /* position: fixed; */
+      /* border-top: 1px solid #8b8b8b; */
+      /*background: #e8e8e8;*/
+      left: 3em;
+      /* top: 660px; */
+      display: inline-block;
+      padding: 1em;
+      padding-top: 5px;
+      padding-bottom: 5px;
+      width: 18em;
+      /*height: 100vh;*/
+      line-height: 1.5;
+    }
+
+
+    .xtx-elevator .elevator_title .icon {
+      color: #333;
+    }
+    
+    .xtx-elevator .elevator_title .text {
+      padding: 3px 3px 3px 6px;
+      font-size: 12pt;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      color: #333;
+    }
+    
+    .xtx-elevator li a,.link li a  {
+      text-decoration: none;
+      font-size: 12pt;
+  }
+  
+    /* #home-button{
+      position: fixed;
+      top: 266px;
+      left: 3em;
+      z-index: 100;
+  } */
+
+    .link .button, .xtx-elevator .button{
+      margin-bottom: 20px;
+    }
+
+    .button .text {
+      padding: 3px 3px 3px 6px;
+      font-size: 14pt;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+  
+    .xtx-elevator .elevator_title span,
+    .button span {
+    display: inline-block;
+    vertical-align: middle;
+    }
+
+    #home-button {
+      cursor: pointer;
+    }
+
+
+
+  </style>
+</head>
+
+<body>
+  
+  <!-- Hero-image -->
+  
+  <div class="hero-image">
+    <a class="image-logo" href="http://www.bccdc.ca/">
+      <img src="../images/BCCDC_Logo_White_900px.png" alt="Left Logo" title="Left Logo">
+    </a>
+    <div class="image-text">
+      <div class="bottom-text">West Nile Virus Surveillance</div>
+    </div>
+  </div>
+  
+  <!-- Hero-image end --> 
+
+
+  <!-- Left panel --> 
+   
+  <div class="leftPanel">
+    
+    <!-- Elevator -->
+            
+    <div class="xtx-elevator">
+      
+      <!-- Back to top -->
+      <div class = "button" id="backTop">
+        <a href = "javascript:;">
+          <button type="button" class="btn btn-default action-button">
+            <span class="icon"><i class="fa-solid fa-list"></i></span>
+            <span class = "text">Table of contents</span>
+          </button>
+        </a>
+      </div>
+      <!-- Back to top end -->
+      
+      <!-- <div class="elevator_title">
+        <span class="icon"><i class="fa-solid fa-list"></i></span> <span class = "text">Table of content</span>
+      </div> -->
+      <ul class="xtx-elevator-list">
+      <li><a href="javascript:;" data-name="topic1">West Nile Virus</a></li>
+      <li><a href="javascript:;" data-name="topic2">Location of WNV Detections in British Columbia</a></li>
+      <li><a href="javascript:;" data-name="topic3">Mosquito Surveillance</a></li>
+      <li><a href="javascript:;" data-name="topic4">Supplementary information</a></li>
+      </ul>
+    </div>
+    
+    <!-- Elevator end -->
+      <button id="openModal" class="dialog-open-btn"> </button>
+
+    <dialog id="modal" class="dialog">
+      <button id="closeModal" class="dialog-close-btn">Close</button>
+      <!-- <button id="closeModal" class="dialog-close-btn">Close</button> -->
+      <img id="image" src="../images/Webpage_navigation.png" alt="Click on button" />
+    </dialog>
+
+    </div>
+  <!-- Left panel end-->
+
+  <!-- <div style="height: 3000px; width: 800px; margin: 0 auto;background-color: aquamarine;">
+    akfjal;jfl;ajf;al
+  </div> -->
+
+  <!-- js for left panel position -->
+  <script>
+    // get left panel element
+    const leftPanel = document.querySelector('.leftPanel')
+    // add scroll event listener
+    window.addEventListener('scroll', function(){
+      // when the scroll head is greater than 300
+      const n = document.documentElement.scrollTop
+      if (n >= 250) {
+        leftPanel.style.position = "fixed";
+        leftPanel.style.left = "30px";
+        leftPanel.style.top = "30px";
+      } else {
+        leftPanel.style.position = "relative"
+        leftPanel.style.left = "30px";
+      }
+    })
+  </script>
+
+  <!-- js for bootstrap model -->
+  <script>
+    const modal = document.querySelector("#modal");
+    const openModal = document.querySelector("#openModal");
+    const closeModal = document.querySelector("#closeModal");
+
+    if (modal) {
+      openModal &&
+        openModal.addEventListener("click", () => modal.showModal());
+        console.log(modal.showModal)
+      closeModal &&
+        closeModal.addEventListener("click", () => modal.close());
+    }
+
+  </script>
+
+  <!-- js for Elevator-->
+  <script>
+
+  (function () {
+      // 1. click and scroll
+      const list = document.querySelector('.xtx-elevator-list')
+      list.addEventListener('click', function (e) {
+        // console.log(11)
+        if (e.target.tagName === 'A' && e.target.dataset.name) {
+          // get old active object
+          const old = document.querySelector('.xtx-elevator-list .active')
+          // check if old exist, if do, remove
+          if (old) old.classList.remove('active')
+          // add active to current object clicked
+          e.target.classList.add('active')
+          // the the position for big box
+          const top = document.querySelector(`.section_${e.target.dataset.name}`).offsetTop
+          // scroll the page
+          console.log(top)
+          document.documentElement.scrollTop = top
+
+        }
+      })
+
+
+      // 2. add sctive for small box according to the position of big box
+      window.addEventListener('scroll', function () {
+        
+        //  3.1  remove active class 
+        // get the old active object
+        const old = document.querySelector('.xtx-elevator-list .active')
+        // check if old exist, if do, remove
+        if (old) old.classList.remove('active')
+
+        // 3.2 select small box according to the position
+
+        // get four big box
+        const topic1 = document.querySelector('.section_topic1')
+        const topic2 = document.querySelector('.section_topic2')
+        const topic3 = document.querySelector('.section_topic3')
+        const topic4 = document.querySelector('.section_topic4')
+   
+   
+        const n = document.documentElement.scrollTop
+        if (n >= topic1.offsetTop && n < (topic2.offsetTop - 20)) {
+    // Select first small box
+    document.querySelector('[data-name=topic1]').classList.add('active')
+} else if (n >= (topic2.offsetTop - 20) && n < (topic3.offsetTop - 20)) {
+    // Select second small box
+    document.querySelector('[data-name=topic2]').classList.add('active')
+} else if (n >= (topic3.offsetTop - 20) && n < (topic4.offsetTop - 20)) {
+    // Select third small box
+    document.querySelector('[data-name=topic3]').classList.add('active')
+} else if (n >= (topic4.offsetTop - 20)) {
+    // Select fourth small box
+    document.querySelector('[data-name=topic4]').classList.add('active')
+}
+      })
+
+    })();
+
+    // Back to top button
+    const backTop = document.querySelector('#backTop')
+    backTop.addEventListener('click', function(){
+      document.documentElement.scrollTop = 0
+    })
+
+  </script>
+  <!-- js for Elevator end -->
+  
+  <!-- js for idle time -->
+  <script>
+    function idleTimer() {
+      var t = setTimeout(logout, 600000); // time is in milliseconds (1000 is 1 second)
+
+      var socket_timeout_interval = setInterval(
+          function () {Shiny.onInputChange('isActive', 'TRUE'); },
+          120000
+      );
+
+      if (document.hasFocus()) {
+        window.onmousemove = resetTimer; // catches mouse movements
+        window.onmousedown = resetTimer; // catches mouse movements
+        window.onclick = resetTimer;     // catches mouse clicks
+        window.onscroll = resetTimer;    // catches scrolling
+        // window.focus = resetTimer;
+        // window.onkeypress = resetTimer;  //catches keyboard actions
+      }
+
+      function logout() {
+          clearInterval(socket_timeout_interval);  //stop interval
+          Shiny.onInputChange('isActive', 'FALSE');
+      }
+
+      function resetTimer() {
+        clearTimeout(t);
+        t = setTimeout(logout, 600000);  // time is in milliseconds (1000 is 1 second)
+      }
+
+    }
+
+    idleTimer();
+  </script>
+  <!-- js for idle time end -->
+
+
+</body>

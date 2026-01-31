@@ -1,0 +1,13 @@
+**BC:** British Columbia
+
+**BCCDC:** British Columbia Centre for Disease Control
+
+**AHC:** BC Ministry of Agriculture and Food's Animal Health Centre
+
+**WNV:** West Nile virus
+
+**WN-non-NS:** West Nile non-Neurological Syndrome
+
+**WNAI:** West Nile Asymptomatic Infection
+
+**WNNS:** West Nile Neurological Syndrome

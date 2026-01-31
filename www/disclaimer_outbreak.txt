@@ -1,0 +1,9 @@
+**Terms of Use**
+
+By using this dashboard, you understand and agree that:
+
+**Disclaimer & Limitation of Liability**
+
+This dashboard, and data contained in it, are provided "as is" without representations or warranties of any kind, either expressed or implied, including but not limited to, representations or warranties regarding the accuracy of the information in the dashboard and associated data, implied warranties of merchantability and fitness for a particular purpose, non-infringement or other violation of rights. The British Columbia Centre for Disease Control operates in a live database environment. Data are updated regularly and may change over time as the source data feeds are refreshed. Information presented in this report may not reflect the current situation, and therefore should only be used for reference purposes. Access to this dashboard and associated data may be suspended or discontinued, and the content of the dashboard may be altered, in part or in whole, at any time and for any reason, with or without prior notice, at the discretion of the British Columbia Centre for Disease Control and the Provincial Health Services Authority. All inferences, opinions, and conclusions drawn in this report are those of the authors, and do not reflect the opinions or policies of the Data Steward(s). Anyone using this information does so at their own risk. In no event will the British Columbia Centre for Disease Control or the Provincial Health Services Authority be liable for any direct, indirect, special, punitive, incidental, or consequential damages arising from the use of, or the inability to use, this dashboard. 
+
+Please direct questions and feedback to the BCCDC: Admininfo@bccdc.ca.

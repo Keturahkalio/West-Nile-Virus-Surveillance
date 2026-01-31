@@ -1,0 +1,464 @@
+/* scroll the page smoothly */
+html {
+  scroll-behavior: smooth;
+}
+
+/* -----------HERO IMAGE AT TOP OF PAGE -----------*/
+
+/* LARGE HERO IMAGE AT TOP OF PAGE*/
+
+.hero-image {
+  height: 200px;
+  background-color: #004987; 
+  display: flex; /* Change to `display: none` for no hero image */
+  justify-content: center;
+  align-items: center;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.image-logo{
+  width: 30%;
+  align: "left";
+}
+
+.image-logo img{
+  height: auto;
+  max-height: 100px;
+  margin-top: 4%; 
+  margin-left: 4%;
+  align: "left";
+}
+
+.image-text {
+  width: 70%;
+  text-align: left;
+}
+    
+.top-text {
+  position: relative;
+  font-size: calc(12px + 1vw);
+  padding-bottom: 0.5em;
+  display: block; /* Change to `display: none` for no top text */
+  color: #ffffff72;
+}
+
+.bottom-text {
+  position: relative;
+  font-size: calc(24px + 2vw);
+  line-height: 1em;
+  display: block; /* Change to `display: none` for no bottom text */
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.footer-image {
+  position: relative;
+  bottom: -120px;
+  left: 0;
+}
+/* -----------HERO IMAGE END -----------*/
+
+/* wrapper */
+.wrapper {
+  width: 900px;
+  position: relative;
+  top: 60px;
+  margin: 0 auto;
+}
+
+/* Cross link */
+.hyperlink {
+  /*position: flex;
+  right: 50px;
+  width: 300px;*/
+  top: 250px;
+  float: right;
+  margin-right: 6%;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 35px 20px 20px 27px;
+  
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #004987;
+
+}
+
+.link_title {
+  border-bottom: 1px solid #ccc;
+  padding: 0 0 5px 0;
+  margin: 0 0 20px 0;
+
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.hyperlink span {
+  height: 35px;
+  line-height: 35px;
+  text-align: center;
+  /* border-bottom: 1px dashed #ccc; */
+}
+
+.link_content a {
+  text-decoration: none;
+  color: #004987;
+  font-size: 16px;
+}
+
+/* how_to_button */
+.how_to_button {
+    /* position: absolute; */
+
+    height: 40px;
+    width: 230px;
+    background: url(../images/standard_button_bg_2x_text.png) no-repeat;
+    background-size:cover;
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+}
+
+
+
+.word_content{
+    float: right;
+    margin-right: 430px;
+    margin-top: 20px;
+
+    height: 2000px;
+    width: 900px;
+    /* background-color: aquamarine; */
+}
+
+.message_box {
+    height: 50px;
+    width: 900px;
+    background-color: rgb(255, 237, 199);
+    border-radius: 10px;
+    font-weight: 400;
+}
+
+.message_box>p{
+    line-height: 50px;
+    padding: 0 20px 0 20px;
+}
+
+.message_box2 {
+    padding: 15px 25px 10px 35px;
+    margin: 20px 0 0 0;
+    background-color: #edf5fb;
+    border-radius: 20px;
+    box-shadow: 3px 6px 6px hsl(0deg 0% 0% / 0.01);
+}
+
+.message_box2 li {
+    list-style-type: disc;
+    list-style-position: inside;
+}
+
+
+
+/* callout box */
+.info {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    width: 100%;
+    padding: 12px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: start;
+    background: #509AF8;
+    border-radius: 8px;
+    box-shadow: 0px 0px 5px -3px #111;
+  }
+  
+  .info_icon {
+    width: 20px;
+    height: 20px;
+    transform: translateY(-2px);
+    margin-right: 8px;
+    color: #fff;
+  }
+  
+  .info_title {
+    font-weight: 500;
+    font-size: 16px;
+    color: #fff;
+  }
+
+/* line division */
+.line_div img {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* tab */
+
+.trends_tab {
+  width: 800px;
+  height: 600px;
+  margin: 10px;
+}
+
+.tab_nav {
+  width: 100%;
+  height: 30px;
+  line-height: 30px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.tab_nav ul {
+  list-style: none;
+  display: flex;
+  justify-content: flex-end;
+  border-bottom: 1px solid #ccc
+}
+
+.tab_nav ul li {
+  margin: 0 20px;
+  font-size: 16px;
+}
+
+.tab_nav ul a {
+  padding: 10px 20px;
+  color: #337ab7;
+}
+
+.tab_nav ul a.active {
+  color: #555;
+}
+
+.tab_content {
+  padding: 0 16px;
+}
+
+.tab_content .item {
+  display: none;
+  background-color: pink;
+}
+
+.tab_content .item.active {
+  display: block;
+}
+
+.section_topic1 a:link {
+  color: #265a9e;
+}
+
+.section_topic1 a:visited {
+  color: #265a9e;
+
+}
+
+.section_topic1 a:hover {
+  color: #265a9e;
+  text-decoration: underline;
+}
+
+/* Headers */
+h1 {
+    font-size: 20pt;
+    font-weight: bold;
+    font-family: "Helvetica Neue" ;
+    color: #004987;
+    margin: 20px auto;
+  }
+
+h4 {
+    font-size: 13pt;
+    font-weight: 400;
+    font-family: "Helvetica Neue" ;
+    color: #004987;
+    line-height: 25px;
+    margin: 10px auto;
+}
+
+h3 {
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #333;
+}
+
+p, li {
+    font-size: 13pt;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    line-height: 25px;
+    margin: 10px auto;
+    color: #333;
+}
+
+.section_topic5 li {
+    list-style-type: disc;
+    list-style-position: inside;
+}
+
+.sub_bullet > ul {
+    padding-left: 40px;
+}
+
+.sub_bullet > ul > li > ul {
+    padding-left: 30px;
+}
+
+.sub_bullet > ul > li {
+    list-style-type: disc;
+    list-style-position: outside;
+}
+
+.sub_bullet > ul > li > ul > li {
+    list-style-type: circle;
+    list-style-position: outside;
+}
+
+
+.section_topic4 a {
+  color: #265a9e;
+}
+ 
+.section_topic4 a:hover {
+  color: #265a9e;
+  text-decoration: underline;
+}
+
+/*kk: added this to ensure the card() doesn't affect the tab section */
+
+#smallTabs .nav-tabs {
+    display: block !important; /* Override the flex display */
+}
+
+/*kk: added this to ensure the tabsets (human cases & animal cases) are evenly spaced */
+
+.nav-tabs {
+    max-width: 100% !important;  /* Make the tabs span the full width */
+    display: flex !important;  /* Ensures the tabs are properly spaced */
+    justify-content: space-around !important; /* Spread tabs evenly */
+}
+
+.nav-tabs > li {
+    flex-grow: 1;  /* Distribute equal space to all tabs */
+    text-align: center; /* Center tab text */
+}
+
+
+
+/* Force Leaflet legend to top-right */
+.leaflet-control.legend {
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  text-align: left;
+}
+
+
+.leaflet-bottom.leaflet-left .legend {
+  display: flex;
+  flex-direction: column !important; /* Force vertical stacking */
+}
+
+
+/* Ensure tmap_leaflet() legend is also aligned to bottom left */
+.leaflet-bottom.leaflet-right .legend {
+  left: 10px !important;   /* Move to the left */
+  right: auto !important;  /* Override right alignment */
+  position: absolute !important;
+}
+
+/* ensure the body is aligned left */
+body .container-fluid {
+    padding-left: 0;
+}
+
+.row {
+    margin-left: 0 !important;
+}
+
+.row .shiny-input-container:not(.shiny-input-container-inline) {
+    width: 100% !important; /* Adjusts to full container width */
+    max-width: 400px; /* Adjust based on what fits best */
+    padding-left: 0;
+}
+
+.col-sm-7 {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.col-sm-5 {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.dataTables_scroll {
+  font-size: 14px;
+}
+
+.col-sm-4 {
+  padding-left: 0 !important;
+}
+
+.col-sm-12 {
+  padding-left: 0 !important;
+}
+
+table.dataTable thead tr th,
+table.dataTable thead tr td {
+    padding: 3px !important;  /* Force override */
+}
+
+
+/* Custom styling for the tabset box - mosquito species */
+.custom-panel {
+  background-color: #fff; 
+  border: 1px solid #ddd;  /* Light border */
+  border-radius: 5px; /* Rounded corners */
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1); /* Soft shadow */
+  padding: 10px; /* Inner spacing */
+  margin-top: 20px; /* Space above */
+  margin-bottom: 20px; /* Space below */
+  padding-top: 0px;
+}
+
+/* Ensure mosquito species tabs also follow the same rule */
+.custom-panel .nav-tabs > li > a,
+.custom-panel .nav-tabs > li.active > a {
+    background-color: #808080 !important; /* Inactive (grey) */
+    color: white !important;
+}
+
+.custom-panel .nav-tabs > li.active > a {
+    background-color: #004987 !important; /* Active (blue) */
+    color: white !important;
+}
+
+/* Apply to smallTabs (human & animal cases) */
+#smallTabs .nav-tabs > li > a {
+    color: #808080!important; /* grey text when inactive */
+}
+
+#smallTabs .nav-tabs > li.active > a {
+    color: #337ab7 !important; /* blue text when active */
+}
+
+p, li {
+    font-family: block !important;
+}
+
+.button .text {
+  font-family: block !important;
+}
+
+.bslib-value-box .value-box-grid {
+    display: grid;
+    /* align-items: center; */
+    overflow: hidden;
+    background-color: #003878;
+}
+
+.shiny-notification {
+             position:fixed;
+             top: calc(50%);
+             left: calc(50%);
+             }

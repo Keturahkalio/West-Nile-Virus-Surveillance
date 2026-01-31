@@ -1,0 +1,202 @@
+#main .nav-pills > li.active > a,
+#main .nav-pills > li.active > a:hover,
+#main .nav-pills > li.active > a:focus {
+    background-color: #004987;
+}
+
+
+
+title, h1, h2, h3, h4, h5, h6, legend {
+    color: #004987;
+}
+
+
+/* title */
+h1.title{
+  font-size: 40pt;
+  font-weight: bold;
+  font-family: "Helvetica Neue" ;
+}
+
+/* Whole document: */
+body{
+  font-size: 12pt;
+}
+/* Headers */
+h1{
+  font-size: 20pt;
+  font-weight: bold;
+  font-family: "Helvetica Neue" ;
+}
+
+/* Headers */
+
+h2{
+  font-size: 18pt;
+  font-weight: bold;
+  font-family: "Helvetica Neue" ;
+  padding-top: 0.5em !important;
+  margin-top: 0.5em !important;
+}
+
+/* Headers */
+h3{
+  font-size: 13pt;
+  font-weight: bold;
+  font-family: "Helvetica Neue" ;
+
+}
+
+/* Headers */
+h4{
+  font-size: 13pt;
+  font-family: "Helvetica Neue" ;
+  padding-top: 0.5em !important;
+  margin-top: 0.5em !important;
+}
+
+
+
+/* .section h2, */
+.section h3, 
+/* .section h4, */
+.section h5 { 
+  padding-top: 1.5em !important;
+  margin-bottom: 0.75em;
+}
+
+
+
+
+#TOC::before {
+  content: "";
+  display: block;
+  height: 200px;
+  margin: 20px 20px 40px 20px;
+  background-size: contain;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+#bannerimage {
+  width: 100%;
+  background-image: url(Banner image.png);
+  height: 405px;
+  background-color: purple;
+  background-position: center;
+}
+
+ /* Space Between TOC and 
+  Righthand side content on large screens */
+
+ @media (min-width: 992px) {
+    .col-md-9 {
+      width: 75%;
+      padding-left: 5em !important;
+    }
+ }
+
+
+
+/*------------Table of Contents (TOC)----------- */
+
+
+.tocify {
+  border: none;   /*Removes border */
+  border-radius: 0px; /* Gets rid of rounded corners on TOC */
+  font-size: 16px;
+}
+
+.tocify ul, .tocify li { /* Increases spacing between TOC headers*/
+    line-height: 25px !important;
+}
+
+.tocify ul {
+  border-right: solid 1px #eee; /* Thin right border on TOC list */
+}
+
+.tocify-header {
+  text-indent: initial;
+}
+
+.tocify-subheader > .tocify-item {
+  text-indent: initial;
+  padding-left: 2em;
+}
+
+
+  footer:after {
+    font-size: 12pt;
+    content: attr(label);
+    position: absolute;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    text-align:center;
+    bottom: 20px;
+    line-height: 1.9;
+    display: block;
+  }
+
+
+/* -----------HERO IMAGE AT TOP OF PAGE -----------*/
+
+/* LARGE HERO IMAGE AT TOP OF PAGE*/
+
+.hero-image {
+   /*  position: relative; */ 
+    padding-top: 0;
+    margin-bottom: 1em;
+    /* liner gradient tints the image darker for readability*/
+    height: 200px;
+    width: 100%;
+    background-color: #004987; 
+    /*background-size: cover; */
+    /*background-position: center center; */
+    display: flex; /* Change to `display: none` for no hero image */
+    justify-content: center;
+    align-items: center;
+}
+
+.image-logo{
+  width: 30%;
+  align: "left";
+}
+
+.image-logo img{
+  height: auto;
+  max-height: 100px;
+  margin-top: 4%; 
+  margin-left: 4%;
+  align: "left";
+}
+
+
+.image-text {
+  width: 70%;
+  text-align: left;
+}
+      
+.top-text {
+  position: relative;
+  font-size: calc(12px + 1vw);
+  padding-bottom: 0.5em;
+  display: block; /* Change to `display: none` for no top text */
+  color: #ffffff72;
+}
+
+.bottom-text {
+  position: relative;
+  font-size: calc(24px + 2vw);
+  line-height: 1em;
+  display: block; /* Change to `display: none` for no bottom text */
+  color: #ffffff;
+  margin-bottom: 2.5rem;
+  font-weight: bold;
+}
+
+.modal-lg {
+width: 1280px;
+height: 720px;
+}
